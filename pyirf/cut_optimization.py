@@ -13,6 +13,7 @@ from .binning import create_histogram_table, bin_center, calculate_bin_indices
 
 __all__ = [
     "optimize_gh_cut",
+    "optimize_cuts",
 ]
 
 
@@ -74,7 +75,7 @@ def optimize_cuts(
     fill_value = signal['gh_score'].max()
 
     sensitivities = []
-    cut_indicies = []
+    cut_indices = []
     n_theta_cuts = len(theta_cut_efficiencies)
     n_gh_cuts = len(gh_cut_efficiencies)
     n_cuts = len(multiplicity_cuts) * n_theta_cuts * n_gh_cuts
@@ -155,7 +156,7 @@ def optimize_cuts(
                     signal_hist, background_hist, alpha=alpha,
                     **kwargs,
                 )
-                cut_indicies.append((multiplicity_index, theta_index, gh_index))
+                cut_indices.append((multiplicity_index, theta_index, gh_index))
                 sensitivities.append(sensitivity)
                 bar.update(1)
 
@@ -191,7 +192,7 @@ def optimize_cuts(
             # if all are invalid, just use the first one
             best = 0
 
-        multiplicity_index, theta_index, gh_index = cut_indicies[best]
+        multiplicity_index, theta_index, gh_index = cut_indices[best]
 
         best_sensitivity[bin_id] = sensitivities[best][bin_id]
 
