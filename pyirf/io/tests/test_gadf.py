@@ -11,6 +11,8 @@ import tempfile
 e_bins = np.geomspace(0.1, 100, 31) * u.TeV
 migra_bins = np.linspace(0.2, 5, 101)
 fov_bins = [0, 1, 2, 3] * u.deg
+fov_bins_phi = [0, 120, 240, 360] * u.deg
+fov_bins_lonlat = [-1, -0.33, 0.33, 1] * u.deg
 source_bins = np.linspace(0, 1, 101) * u.deg
 
 
@@ -22,6 +24,38 @@ def aeff2d_hdus():
 
     hdus = [
         create_aeff2d_hdu(area, e_bins, fov_bins, point_like=point_like)
+        for point_like in [True, False]
+    ]
+
+    return area, hdus
+
+
+@pytest.fixture
+def aeff3d_polar_hdus():
+    from pyirf.io import create_aeff3d_polar_hdu
+
+    area = np.full((len(e_bins) - 1, len(fov_bins) - 1), 1e6) * u.m**2
+
+    hdus = [
+        create_aeff3d_polar_hdu(
+            area, e_bins, fov_bins, fov_bins_phi, point_like=point_like
+        )
+        for point_like in [True, False]
+    ]
+
+    return area, hdus
+
+
+@pytest.fixture
+def aeff3d_lonlat_hdus():
+    from pyirf.io import create_aeff3d_lonlat_hdu
+
+    area = np.full((len(e_bins) - 1, len(fov_bins) - 1), 1e6) * u.m**2
+
+    hdus = [
+        create_aeff3d_lonlat_hdu(
+            area, e_bins, fov_bins_lonlat, fov_bins_lonlat, point_like=point_like
+        )
         for point_like in [True, False]
     ]
 
@@ -109,6 +143,28 @@ def test_effective_area2d_schema(aeff2d_hdus):
         AEFF_2D.validate_hdu(hdu)
 
 
+@pytest.mark.xfail(reason="AEFF_3D not implemented yet", raises=ImportError)
+def test_effective_area3d_polar_schema(aeff3d_polar_hdus):
+    """Test our effective area is readable by gammapy"""
+    from ogadf_schema.irfs import AEFF_3D
+
+    _, hdus = aeff3d_polar_hdus
+
+    for hdu in hdus:
+        AEFF_3D.validate_hdu(hdu)
+
+
+@pytest.mark.xfail(reason="AEFF_3D not implemented yet", raises=ImportError)
+def test_effective_area3d_lonlat_schema(aeff3d_lonlat_hdus):
+    """Test our effective area is readable by gammapy"""
+    from ogadf_schema.irfs import AEFF_3D
+
+    _, hdus = aeff3d_lonlat_hdus
+
+    for hdu in hdus:
+        AEFF_3D.validate_hdu(hdu)
+
+
 def test_energy_dispersion_gammapy(edisp_hdus):
     '''Test our energy dispersion is readable by gammapy'''
     from gammapy.irf import EnergyDispersion2D
@@ -183,14 +239,26 @@ def test_rad_max_schema(rad_max_hdu):
     RAD_MAX.validate_hdu(hdu)
 
 
-def test_cref(aeff2d_hdus, edisp_hdus, psf_hdu, bg_hdu, rad_max_hdu):
-    for point_like in range (2):
-        hdus = [fits.PrimaryHDU(),
-                aeff2d_hdus[1][point_like],
-                edisp_hdus[1][point_like],
-                psf_hdu[1],
-                bg_hdu[1],
-                rad_max_hdu[1]]
+def test_cref(
+    aeff2d_hdus,
+    aeff3d_polar_hdus,
+    aeff3d_lonlat_hdus,
+    edisp_hdus,
+    psf_hdu,
+    bg_hdu,
+    rad_max_hdu,
+):
+    for point_like in range(2):
+        hdus = [
+            fits.PrimaryHDU(),
+            aeff2d_hdus[1][point_like],
+            aeff3d_polar_hdus[1][point_like],
+            aeff3d_lonlat_hdus[1][point_like],
+            edisp_hdus[1][point_like],
+            psf_hdu[1],
+            bg_hdu[1],
+            rad_max_hdu[1],
+        ]
 
         with tempfile.NamedTemporaryFile(suffix='.fits') as f:
             fits.HDUList(hdus).writeto(f.name)
