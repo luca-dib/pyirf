@@ -145,6 +145,12 @@ def create_aeff3d_polar_hdu(
     return BinTableHDU(aeff, header=header, name=extname)
 
 
+@u.quantity_input(
+    effective_area=u.m ** 2,
+    true_energy_bins=u.TeV,
+    fov_longitude_bins=u.deg,
+    fov_latitude_bins=u.deg,
+)
 def create_aeff3d_lonlat_hdu(
     effective_area,
     true_energy_bins,
