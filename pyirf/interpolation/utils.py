@@ -62,6 +62,11 @@ def plumb_point_dist(line, target):
     ):
         # Compute distance of plumb point to line, for details see
         # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Another_vector_formulation
+        if line.shape[1] == 2:
+            # Since numpy>=2.5 np.cross for 2 component vectors was completely removed
+            # Cross product of 2 component vectors a and b is equivalent to det([a,b])
+            mat = np.stack([P - A, B - A])
+            return np.linalg.norm(np.linalg.det(mat)) / np.linalg.norm(B - A)
         return np.linalg.norm(np.cross(P - A, B - A)) / np.linalg.norm(B - A)
     # If not, the nearest point A <= x <= B is one A and B, thus the searched distance
     # is the one to this nearest point
