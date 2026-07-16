@@ -42,6 +42,7 @@ dependencies = [
 [project.optional-dependencies]
 gammapy = [
   "gammapy >=1.0",
+  "regions <0.12"  # gammapy uses function removed in 0.12, remove when fixed upstream
 ]
 docs = [
     "sphinx",
