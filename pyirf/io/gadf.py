@@ -7,7 +7,6 @@ import pyirf.binning as binning
 
 from ..version import __version__
 
-
 __all__ = [
     "create_aeff2d_hdu",
     "create_energy_dispersion_hdu",
@@ -253,7 +252,7 @@ def create_energy_dispersion_3d_polar_hdu(
     edisp["MATRIX"] = u.Quantity(energy_dispersion.T[np.newaxis, ...]).to(u.one)
 
     # required header keywords
-    header = DEFAULT_HEADER.copy()
+    header = Header(dict(CREATOR=f"pyirf v{__version__}"))
     header["HDUCLAS1"] = "RESPONSE"
     header["HDUCLAS2"] = "EDISP"
     header["HDUCLAS3"] = "POINT-LIKE" if point_like else "FULL-ENCLOSURE"
@@ -315,7 +314,7 @@ def create_energy_dispersion_3d_lonlat_hdu(
     edisp["MATRIX"] = u.Quantity(energy_dispersion.T[np.newaxis, ...]).to(u.one)
 
     # required header keywords
-    header = DEFAULT_HEADER.copy()
+    header = Header(dict(CREATOR=f"pyirf v{__version__}"))
     header["HDUCLAS1"] = "RESPONSE"
     header["HDUCLAS2"] = "EDISP"
     header["HDUCLAS3"] = "POINT-LIKE" if point_like else "FULL-ENCLOSURE"

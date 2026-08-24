@@ -3,7 +3,6 @@ import numpy as np
 import astropy.units as u
 from ..binning import resample_histogram1d
 
-
 __all__ = [
     "energy_dispersion",
     "energy_dispersion_3d_polar",
@@ -12,7 +11,6 @@ __all__ = [
     "energy_migration_matrix_3d_polar",
     "energy_migration_matrix_3d_lonlat",
     "energy_dispersion_to_migration",
-    "energy_dispersion_to_migration_3d",
 ]
 
 
@@ -424,19 +422,33 @@ def energy_dispersion_to_migration(
     Returns
     -------
     migration_matrix: numpy.ndarray
-        Three-dimensional energy migration matrix. The third dimension
-        equals the fov offset dimension of the energy dispersion matrix.
+        Three- or Four-dimensional energy migration matrix, depending. If three-dimensional, the third dimension
+        equals the fov offset dimension of the energy dispersion matrix. If four-dimensional, the third and
+        fourth dimension equal the fov dimensions (polar or lon-lat) of the energy dispersion matrix.
     """
+
+    migra_width = np.diff(disp_migration_edges)
+
+    if dispersion_matrix.ndim == 3:
+        disp_axis = 1
+        fov_bins_shape = dispersion_matrix.shape[2:]
+        probability = dispersion_matrix * migra_width[np.newaxis, :, np.newaxis]
+    elif dispersion_matrix.ndim == 4:
+        disp_axis = 3
+        fov_bins_shape = dispersion_matrix.shape[1:3]
+        probability = (
+            dispersion_matrix * migra_width[np.newaxis, np.newaxis, np.newaxis, :]
+        )
+    else:
+        raise ValueError("Argument `dispersion_matrix` should have ndim==3 or ndim==4")
+
     migration_matrix = np.zeros(
         (
             len(new_true_energy_edges) - 1,
             len(new_reco_energy_edges) - 1,
-            dispersion_matrix.shape[2],
+            *fov_bins_shape,
         )
     )
-
-    migra_width = np.diff(disp_migration_edges)
-    probability = dispersion_matrix * migra_width[np.newaxis, :, np.newaxis]
 
     true_energy_interpolation = resample_histogram1d(
         probability,
@@ -445,7 +457,7 @@ def energy_dispersion_to_migration(
         axis=0,
     )
 
-    norm = np.sum(true_energy_interpolation, axis=1, keepdims=True)
+    norm = np.sum(true_energy_interpolation, axis=disp_axis, keepdims=True)
     norm[norm == 0] = 1
     true_energy_interpolation /= norm
 
@@ -466,91 +478,8 @@ def energy_dispersion_to_migration(
             e_true_dispersion,
             disp_migration_edges,
             interpolation_edges,
-            axis=0,
-        )
-
-        migration_matrix[idx, :, :] = y
-
-    return migration_matrix
-
-
-def energy_dispersion_to_migration_3d(
-    dispersion_matrix,
-    disp_true_energy_edges,
-    disp_migration_edges,
-    new_true_energy_edges,
-    new_reco_energy_edges,
-):
-    """
-    Construct a energy migration matrix from an energy dispersion matrix.
-
-    Depending on the new energy ranges, the sum over the first axis
-    can be smaller than 1.
-    The new true energy bins need to be a subset of the old range,
-    extrapolation is not supported.
-    New reconstruction bins outside of the old migration range are filled with
-    zeros.
-
-    Parameters
-    ----------
-    dispersion_matrix: numpy.ndarray
-        Energy dispersion_matrix
-    disp_true_energy_edges: astropy.units.Quantity[energy]
-        True energy edges matching the first dimension of the dispersion matrix
-    disp_migration_edges: numpy.ndarray
-        Migration edges matching the second dimension of the dispersion matrix
-    new_true_energy_edges: astropy.units.Quantity[energy]
-        True energy edges matching the first dimension of the output
-    new_reco_energy_edges: astropy.units.Quantity[energy]
-        Reco energy edges matching the second dimension of the output
-
-    Returns
-    -------
-    migration_matrix: numpy.ndarray
-        Four-dimensional energy migration matrix. The third and fourth
-        dimension equal the fov dimensions of the energy dispersion matrix.
-    """
-    migration_matrix = np.zeros(
-        (
-            len(new_true_energy_edges) - 1,
-            len(new_reco_energy_edges) - 1,
-            *dispersion_matrix.shape[1:3],
-        )
-    )
-
-    migra_width = np.diff(disp_migration_edges)
-    probability = dispersion_matrix * migra_width[np.newaxis, np.newaxis, np.newaxis, :]
-
-    true_energy_interpolation = resample_histogram1d(
-        probability,
-        disp_true_energy_edges,
-        new_true_energy_edges,
-        axis=0,
-    )
-
-    norm = np.sum(true_energy_interpolation, axis=-1, keepdims=True)
-    norm[norm == 0] = 1
-    true_energy_interpolation /= norm
-
-    for idx, e_true in enumerate(
-        (new_true_energy_edges[1:] + new_true_energy_edges[:-1]) / 2
-    ):
-        # get migration for the new true energy bin
-        e_true_dispersion = true_energy_interpolation[idx]
-
-        with warnings.catch_warnings():
-            # silence inf/inf division warning
-            warnings.filterwarnings(
-                "ignore", "invalid value encountered in true_divide"
-            )
-            interpolation_edges = new_reco_energy_edges / e_true
-
-        y = resample_histogram1d(
-            e_true_dispersion,
-            disp_migration_edges,
-            interpolation_edges,
-            axis=-1,
-        ).swapaxes(0, -1)
+            axis=disp_axis - 1,
+        ).swapaxes(0, disp_axis - 1)
 
         migration_matrix[idx, ...] = y
 
