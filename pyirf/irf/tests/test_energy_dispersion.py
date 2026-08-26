@@ -52,7 +52,6 @@ def test_energy_dispersion():
     assert result.shape == (3, 1000, 2)
 
     bin_width = np.diff(migration_bins)
-    bin_centers = 0.5 * (migration_bins[1:] + migration_bins[:-1])
     # edisp shape is (N_E, N_MIGRA, N_FOV), we need to integrate over migration axis
     integral = (result * bin_width[np.newaxis, :, np.newaxis]).sum(axis=1)
     np.testing.assert_allclose(integral, 1.0)
@@ -408,9 +407,7 @@ def test_energy_dispersion_to_migration():
     )
 
     # common tests for 2d and 3d
-    for i, migration in enumerate(
-        [migration_matrix, migration_matrix_3d],
-    ):
+    for migration in [migration_matrix, migration_matrix_3d]:
         # test dimension
         assert migration.shape[0] == len(new_true_energy_bins) - 1
         assert migration.shape[1] == len(new_reco_energy_bins) - 1

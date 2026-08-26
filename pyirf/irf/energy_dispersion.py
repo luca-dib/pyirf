@@ -223,7 +223,8 @@ def energy_dispersion_3d_lonlat(
 def energy_migration_matrix(
     events, true_energy_bins, reco_energy_bins, fov_offset_bins
 ):
-    """Compute the energy migration matrix directly from the events.
+    """
+    Compute the energy migration matrix directly from the events.
 
     Parameters
     ----------
@@ -278,7 +279,8 @@ def energy_migration_matrix(
 def energy_migration_matrix_3d_polar(
     events, true_energy_bins, reco_energy_bins, fov_offset_bins, fov_position_angle_bins
 ):
-    """Compute the energy migration matrix directly from the events in
+    """
+    Compute the energy migration matrix directly from the events in
     offset and position angle binning.
 
     Parameters
@@ -338,7 +340,8 @@ def energy_migration_matrix_3d_polar(
 def energy_migration_matrix_3d_lonlat(
     events, true_energy_bins, reco_energy_bins, fov_longitude_bins, fov_latitude_bins
 ):
-    """Compute the energy migration matrix directly from the events in
+    """
+    Compute the energy migration matrix directly from the events in
     longitude and latitude binning.
 
     Parameters

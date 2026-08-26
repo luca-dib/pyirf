@@ -290,7 +290,7 @@ def create_energy_dispersion_3d_lonlat_hdu(
     fov_longitude_bins: astropy.units.Quantity[angle]
         Bin edges in the field of view longitude.
         For Point-Like IRFs, only giving a single bin is appropriate.
-    fov_latitiude_bins: astropy.units.Quantity[angle]
+    fov_latitude_bins: astropy.units.Quantity[angle]
         Bin edges in the field of view latitude.
         For Point-Like IRFs, only giving a single bin is appropriate.
     migration_bins: numpy.ndarray
